@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maximo CI/CD Configuration Extractor</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Serif:wght@300;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <div class="header-logo">MX</div>
+    <div>
+      <span class="header-title">Maximo CI/CD</span>
+      <span class="header-subtitle">/ Configuration Extractor</span>
+    </div>
+  </div>
+  <span class="header-badge">v2.1.0</span>
+</header>
+
+<div class="app-layout">
+  <nav class="sidebar">
+    <div class="sidebar-label">Pipeline Steps</div>
+    <div class="step-item active" id="step-1">
+      <div class="step-num"><span class="step-num-inner">1</span></div>
+      <div class="step-text"><div class="step-name">Select Artifact</div><div class="step-desc">Choose config type</div></div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-item" id="step-2">
+      <div class="step-num"><span class="step-num-inner">2</span></div>
+      <div class="step-text"><div class="step-name">Confirm Extraction</div><div class="step-desc">Review & approve</div></div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-item" id="step-3">
+      <div class="step-num"><span class="step-num-inner">3</span></div>
+      <div class="step-text"><div class="step-name">Extraction Complete</div><div class="step-desc">Artifacts saved</div></div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-item" id="step-4">
+      <div class="step-num"><span class="step-num-inner">4</span></div>
+      <div class="step-text"><div class="step-name">Confirm Post</div><div class="step-desc">Select environment</div></div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-item" id="step-5">
+      <div class="step-num"><span class="step-num-inner">5</span></div>
+      <div class="step-text"><div class="step-name">Post Complete</div><div class="step-desc">Deployed successfully</div></div>
+    </div>
+  </nav>
+
+  <main>
+    <div id="screen-select">
+      <div class="section-header">
+        <div class="section-eyebrow">IBM Maximo Application Suite</div>
+        <h1 class="section-title">Select Configuration Artifact</h1>
+        <p class="section-desc">Choose the Maximo configuration object you want to extract for CI/CD pipeline integration. Artifacts are exported as clean JSON payloads.</p>
+      </div>
+      <div class="artifact-grid" id="artifact-grid">
+        <div class="artifact-card extract-all" data-artifact="Extract All" data-code="ALL" onclick="selectArtifact(this)">
+          <div class="extract-all-left">
+            <div class="artifact-icon">⚡</div>
+            <div class="extract-all-info">
+              <div class="extract-all-name">Extract All</div>
+              <div class="extract-all-desc">Run all 15 extraction modules</div>
+            </div>
+          </div>
+          <span class="extract-all-badge">16 modules</span>
+          <div class="artifact-check"></div>
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-primary" id="proceed-btn" onclick="openExtractModal()" disabled><span>Begin Extraction</span><span>→</span></button>
+        <button class="btn btn-secondary" onclick="clearAll()" style="font-weight:600; margin-left:0.5rem;"><span>Clear All</span></button>
+        <span class="selection-hint" id="selection-hint">No artifact selected</span>
+      </div>
+    </div>
+
+    <div id="screen-extracting" class="hidden">
+      <div class="loading-section">
+        <div class="spinner-ring"></div>
+        <div class="loading-title">Extracting Configuration...</div>
+        <div class="loading-sub" id="extracting-label">Connecting to Maximo REST API</div>
+        <div class="progress-bar-track"><div class="progress-bar-fill" id="extract-progress"></div></div>
+      </div>
+    </div>
+
+    <div id="screen-extract-success" class="hidden">
+      <div class="success-section">
+        <div class="success-header">
+          <div class="success-icon-wrap extract">✅</div>
+          <div class="success-text">
+            <span class="success-tag extract">Extraction Complete</span>
+            <div class="success-title">Artifact Extracted Successfully</div>
+            <div class="success-sub">Configuration data has been retrieved and saved.</div>
+          </div>
+        </div>
+        <div class="success-details">
+          <div class="detail-row"><span class="detail-label">Artifact</span><span class="detail-value accent" id="extracted-artifact-name">—</span></div>
+          <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value green">Completed</span><div class="detail-dot"></div></div>
+          <div class="detail-row"><span class="detail-label">Output Path</span><span class="detail-value" id="output-path">./Artifacts/output/</span></div>
+          <div class="detail-row"><span class="detail-label">Timestamp</span><span class="detail-value" id="extract-timestamp">—</span></div>
+        </div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:1.5rem;">Would you like to post this artifact to a target environment?</p>
+        <div class="action-row">
+          <button class="btn btn-success" onclick="openPostModal()">Post to Environment →</button>
+          <button class="btn btn-ghost" onclick="resetFlow()">Start Over</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="screen-posting" class="hidden">
+      <div class="loading-section">
+        <div class="spinner-ring green"></div>
+        <div class="loading-title">Posting to Environment...</div>
+        <div class="loading-sub" id="posting-label">Authenticating with target environment</div>
+        <div class="progress-bar-track"><div class="progress-bar-fill green" id="post-progress"></div></div>
+      </div>
+    </div>
+
+    <div id="screen-complete" class="hidden">
+      <div class="complete-screen">
+        <div class="complete-glow">🚀</div>
+        <div class="complete-title">Pipeline Complete</div>
+        <div class="complete-sub" id="complete-message">Artifact posted to target environment successfully.</div>
+        <div class="complete-meta"><span>⏱</span><span id="complete-summary">—</span></div>
+        <br>
+        <button class="btn btn-primary" onclick="resetFlow()">Run Another Extraction</button>
+      </div>
+    </div>
+
+    <div id="screen-cancelled" class="hidden">
+      <div class="cancelled-section">
+        <div class="cancelled-icon">↩</div>
+        <div class="cancelled-title">Post Cancelled</div>
+        <div class="cancelled-sub">The artifact was extracted but not posted. You can post it later.</div>
+        <br>
+        <div class="action-row" style="justify-content:center;">
+          <button class="btn btn-secondary" onclick="showExtractSuccess()">Back to Results</button>
+          <button class="btn btn-ghost" onclick="resetFlow()">Start Over</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="modal-extract">
+  <div class="modal">
+    <div class="modal-icon extract">🔍</div>
+    <div class="modal-title">Confirm Extraction</div>
+    <div class="modal-body">
+      You are about to extract the following configuration artifact from your Maximo environment:<br><br>
+      <span class="modal-artifact-tag" id="modal-artifact-name">—</span><br><br>
+      This will connect to the configured Maximo REST API endpoint and retrieve all matching configuration objects as JSON artifacts.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-extract')">No, Cancel</button>
+      <button class="btn btn-primary" onclick="confirmExtract()">Yes, Extract</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-post">
+  <div class="modal">
+    <div class="modal-icon post">📤</div>
+    <div class="modal-title">Post to Target Environment</div>
+    <div class="modal-body">
+      Select a target environment and confirm to deploy the extracted artifact:<br><br>
+      <span class="modal-artifact-tag" id="modal-post-artifact">—</span><br>
+      <div class="env-selector" id="env-selector">
+        <button class="env-chip selected" onclick="selectEnv(this, 'DEV')">DEV</button>
+        <button class="env-chip" onclick="selectEnv(this, 'SIT')">SIT</button>
+        <button class="env-chip" onclick="selectEnv(this, 'UAT')">UAT</button>
+        <button class="env-chip" onclick="selectEnv(this, 'PROD')">PROD</button>
+      </div><br>
+      This action will push the configuration to <strong><span id="modal-env-display" style="color:var(--accent2);">DEV</span></strong>. Verify the target before proceeding.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="cancelPost()">No, Skip</button>
+      <button class="btn btn-success" onclick="confirmPost()">Yes, Post Now</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+
+
+</body>
+</html>
