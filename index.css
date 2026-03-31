@@ -125,7 +125,9 @@ text-transform: uppercase;
 margin-bottom: 8px;
 display: flex; align-items: center; gap: 8px;
 }
-.section-eyebrow::before { content: ''; display: inline-block; width: 16px; height: 1px; background: var(--accent); }
+.section-eyebrow::before {
+  display: none;
+}
 .section-title { font-family: var(--serif); font-size: 26px; font-weight: 600; color: var(--text); line-height: 1.25; letter-spacing: -0.02em; }
 .section-desc { margin-top: 8px; font-size: 13px; color: var(--text-muted); max-width: 520px; line-height: 1.6; }
 
